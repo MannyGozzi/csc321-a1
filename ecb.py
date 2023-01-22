@@ -23,7 +23,7 @@ file_in.close()
 cipher_out.close()
 
 # Decrypt
-cipher = AES.new(key, AES.MODE_ECB) # mode is a required param, has no effect
+cipher = AES.new(key, AES.MODE_ECB)
 cipher_in = open(filename + ".encrypted", "rb")
 decipher_out = open(filename + ".decrypted", "wb")
 
@@ -34,6 +34,3 @@ while len(buffer) > 0:
     buffer = cipher_in.read(buffer_size)
 cipher_in.close()
 decipher_out.close()
-
-# Cipher Block Chaining (CBC) mode
-

@@ -12,13 +12,13 @@ iv = get_random_bytes(block_size)
 
 def pad_pkcs7(buffer, block_size):
     pad_len = block_size - (len(buffer) % (block_size + 1)) # +1 for null terminated string when read
-    buff_char = pad_len.to_bytes(1, "big")
+    buff_char = pad_len.to_bytes(1, "little")
     for i in range(pad_len):
         buffer = buffer + buff_char
     return buffer
 
 def unpad_pkcs7(buffer, block_size):
-    pad_len = int.from_bytes(buffer[-1:], "big")
+    pad_len = int.from_bytes(buffer[-1:], "little")
     if pad_len >= block_size:
         return buffer
     buf_len = len(buffer)
@@ -31,6 +31,10 @@ def unpad_pkcs7(buffer, block_size):
 # example2 = b'1234567891234567' # 16 chars
 # print(pad_pkcs7(example2, block_size))
 # print(unpad_pkcs7(pad_pkcs7(example2, block_size), block_size))
+# 
+# example3 = b'1' # 16 chars
+# print(pad_pkcs7(example3, block_size))
+# print(unpad_pkcs7(pad_pkcs7(example3, block_size), block_size))
 
 # Cipher Block Chaining (CBC) mode ==========================================
 # Encrypt
@@ -50,8 +54,8 @@ while len(buffer) > 0:
     cipher_out.write(ciphertext)
     newiv = ciphertext
     buffer = file_in.read(block_size)
-cipher_out.close()
 file_in.close()
+cipher_out.close()
 
 # Decrypt
 cipher = AES.new(key, AES.MODE_ECB)
@@ -62,7 +66,7 @@ decipher_out = open("decrypted-" + filename, "wb")
 header = cipher_in.read(header_size)
 decipher_out.write(header)
 
-buffer = unpad_pkcs7(cipher_in.read(block_size), block_size)
+buffer = cipher_in.read(block_size)
 newiv = iv
 while len(buffer) > 0:
     lastiv = newiv      # temp variable for the last iv
@@ -71,5 +75,5 @@ while len(buffer) > 0:
     deciphered_text = bytes(map(operator.xor, lastiv, deciphered_text)) # this undos XOR
     decipher_out.write(unpad_pkcs7(deciphered_text, block_size))
     buffer = cipher_in.read(block_size)
-decipher_out.close()
 cipher_in.close()
+decipher_out.close()

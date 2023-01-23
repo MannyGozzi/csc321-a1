@@ -11,7 +11,7 @@ key = get_random_bytes(key_size)
 iv = get_random_bytes(block_size)
 
 def pad_pkcs7(buffer, block_size):
-    pad_len = block_size - (len(buffer) % (block_size + 1))
+    pad_len = block_size - (len(buffer) % (block_size + 1)) # +1 for null terminated string when read
     buff_char = pad_len.to_bytes(1, "big")
     for i in range(pad_len):
         buffer = buffer + buff_char
@@ -23,6 +23,14 @@ def unpad_pkcs7(buffer, block_size):
         return buffer
     buf_len = len(buffer)
     return buffer[:buf_len-pad_len]
+
+# example1 = b'hello there'
+# print(pad_pkcs7(example1, block_size))
+# print(unpad_pkcs7(pad_pkcs7(example1, block_size), block_size))
+# 
+# example2 = b'1234567891234567' # 16 chars
+# print(pad_pkcs7(example2, block_size))
+# print(unpad_pkcs7(pad_pkcs7(example2, block_size), block_size))
 
 # Cipher Block Chaining (CBC) mode ==========================================
 # Encrypt

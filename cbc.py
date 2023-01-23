@@ -3,7 +3,7 @@ from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 import operator
 
-filename = "mustang.bmp"
+filename = "cp-logo.bmp"
 block_size = 16        # AES uses 16 byte blocks
 key_size = 16
 header_size = 54
@@ -71,9 +71,12 @@ newiv = iv
 while len(buffer) > 0:
     lastiv = newiv      # temp variable for the last iv
     newiv = buffer
-    deciphered_text = cipher.decrypt(buffer)
+    deciphered_text = cipher.decrypt(buffer)         
     deciphered_text = bytes(map(operator.xor, lastiv, deciphered_text)) # this undos XOR
-    decipher_out.write(unpad_pkcs7(deciphered_text, block_size))
     buffer = cipher_in.read(block_size)
+    if len(buffer) == 0:
+        decipher_out.write(unpad_pkcs7(deciphered_text, block_size))
+    else:
+        decipher_out.write(deciphered_text)
 cipher_in.close()
 decipher_out.close()

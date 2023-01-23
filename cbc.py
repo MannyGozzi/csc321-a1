@@ -3,9 +3,10 @@ from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 import operator
 
-filename = "plaintext-cbc"
+filename = "mustang.bmp"
 block_size = 16        # AES uses 16 byte blocks
 key_size = 16
+header_size = 54
 key = get_random_bytes(key_size)
 iv = get_random_bytes(block_size)
 
@@ -17,7 +18,7 @@ def pad_pkcs7(buffer, block_size):
     return buffer
 
 def unpad_pkcs7(buffer, block_size):
-    pad_len = int.from_bytes(buffer[-1:], byteorder='big')
+    pad_len = int.from_bytes(buffer[-1:], "big")
     if pad_len >= block_size:
         return buffer
     buf_len = len(buffer)
@@ -27,7 +28,11 @@ def unpad_pkcs7(buffer, block_size):
 # Encrypt
 cipher = AES.new(key, AES.MODE_ECB) # mode is a required param, has no effect
 file_in = open(filename, "rb")
-cipher_out = open(filename + ".encrypted", "wb")
+cipher_out = open("encrypted-" + filename, "wb")
+
+# preserve header
+header = file_in.read(header_size)
+cipher_out.write(header)
 
 buffer = pad_pkcs7(file_in.read(block_size), block_size)
 newiv = iv
@@ -42,10 +47,14 @@ file_in.close()
 
 # Decrypt
 cipher = AES.new(key, AES.MODE_ECB)
-cipher_in = open(filename + ".encrypted", "rb")
-decipher_out = open(filename + ".decrypted", "wb")
+cipher_in = open("encrypted-" + filename, "rb")
+decipher_out = open("decrypted-" + filename, "wb")
 
-buffer = cipher_in.read(block_size)
+# preserve header
+header = cipher_in.read(header_size)
+decipher_out.write(header)
+
+buffer = unpad_pkcs7(cipher_in.read(block_size), block_size)
 newiv = iv
 while len(buffer) > 0:
     lastiv = newiv      # temp variable for the last iv

@@ -1,3 +1,5 @@
 *.encrypted
 *.decrypted
 tempCodeRunnerFile.py
+encrypted-*
+decrypted-*

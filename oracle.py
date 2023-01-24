@@ -29,34 +29,36 @@ def unpad_pkcs7(buffer, block_size) ->bytes:
 
 def cbc_encrypt(data, key, iv):
     cipher = AES.new(key, AES.MODE_ECB) # mode is a required param, has no effect
-    encrypted = bytearray()
+    encrypted = bytes()
     data = pad_pkcs7(data,block_size)
     newiv = iv
     
     for i in range(int(len(data)/block_size - 1)):
-        buffer: bytearray = data[i*block_size:(i+1)*block_size]
-        buffer = bytearray(map(operator.xor, buffer, newiv))
+        buffer = data[i*block_size:(i+1)*block_size]
+        buffer = bytes(map(operator.xor, buffer, newiv))
         ciphertext = cipher.encrypt(buffer)
         newiv = ciphertext
         encrypted += ciphertext
+    print("Encrypted: ", encrypted)
     return encrypted
 
 def cbc_decrypt(data, key, iv):
     cipher = AES.new(key, AES.MODE_ECB) # mode is a required param, has no effect
     newiv = iv
-    decrypted = bytearray()
+    decrypted = bytes()
     for i in range(int(len(data)/block_size - 1)):
         lastiv = newiv
         buffer = data[i*block_size:(i+1)*block_size]
         newiv = buffer
-        buffer = bytearray(map(operator.xor, buffer, lastiv))
+        buffer = bytes(map(operator.xor, buffer, lastiv))
         ciphertext = cipher.decrypt(buffer)
         newiv = ciphertext
         if i == (len(data) / block_size - 1):
             decrypted += unpad_pkcs7(ciphertext, block_size)
         else:
             decrypted += ciphertext
-    return decrypted.decode(encoding_type)
+    print("Decrypted: ", decrypted)
+    return decrypted
         
 
 
@@ -71,13 +73,14 @@ def submit(user_string):
     user_string = user_string.replace(";", "%3B")
     user_string = user_string.replace("=", "%3D")
     data = "userid=456;userdata=" + user_string + ";session-id=31337"
-    data = bytes(data.encode(encoding_type)) # python defaults to utf-16
+    data = data.encode(encoding_type)
+    print("Post Encryption: ", data)
     ciphertext = cbc_encrypt(data, key, iv)
     return ciphertext
 
 user_string = input("Enter a string: ")
 encrypted_str = submit(user_string)
-print(cbc_decrypt(encrypted_str, key, iv))
+cbc_decrypt(encrypted_str, key, iv)
 
 
 # Verify function ==========================================================

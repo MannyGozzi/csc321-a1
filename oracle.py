@@ -48,7 +48,6 @@ def cbc_encrypt(data, key, iv):
     encrypted = bytearray()
     data = pad_pkcs7(data, block_size)
     newiv = iv
-    print("Data after padding: ", data)
 
     #print("len data ", len(data))
     for i in range(int(len(data)/block_size)):
@@ -60,7 +59,6 @@ def cbc_encrypt(data, key, iv):
         newiv = ciphertext
         for abyte in ciphertext:
             encrypted.append(abyte)
-    print("Encrypted:\t ", encrypted)
     return encrypted
 
 
@@ -72,7 +70,6 @@ def cbc_decrypt(data, key, iv):
     for i in range(int(len(data)/block_size)):
         lastiv = newiv
         buffer = data[i*block_size:(i+1)*block_size]
-        print("buffer decrypt\t ", buffer)
         newiv = buffer
         deciphered = cipher.decrypt(buffer)
         deciphered = bytes(map(operator.xor, deciphered, lastiv))
@@ -82,7 +79,6 @@ def cbc_decrypt(data, key, iv):
         else:
             for abyte in deciphered:
                 decrypted.append(abyte)
-    print("Decrypted:\t ", decrypted)
     return decrypted.decode(encoding_type)
 
 
@@ -98,18 +94,9 @@ def submit(user_string):
     user_string = user_string.replace("=", "%3D")
     user_string = "userid=456;userdata=" + user_string + ";session-id=31337"
     #user_string = "hello"
-    print("Starting str:\t ", user_string)
     data = user_string.encode(encoding_type)
-    print("Post Encryption:\t ", data)
     ciphertext = cbc_encrypt(data, key, iv)
     return ciphertext
-
-
-user_string = input("Enter a string: ")
-encrypted_str = submit(user_string)
-decrypted_str = cbc_decrypt(encrypted_str, key, iv)
-print(decrypted_str)
-
 
 # Verify function ==========================================================
 # The second function, called verify(), should: (1) decrypt the string(you may use a AES-CBC decrypt library or implement your ownCBC decrypt);
@@ -117,17 +104,20 @@ print(decrypted_str)
 # If you’ve written submit() correctly, it should be impossible for a user to provide input to submit()
 # that will result in verify() returning true.
 
-def verify(ciphertext):
-    cipher = AES.new(key, AES.MODE_CBC, iv)
-    plaintext = cipher.decrypt(ciphertext)
-    plaintext = unpad_pkcs7(plaintext, block_size)
-    print(plaintext)
+def verify(ciphertext, key, iv):
+    plaintext = cbc_decrypt(ciphertext, key, iv)
     if ";admin=true;" in plaintext:
         print("True")
         return True
     else:
         print("False")
         return False
+
+user_string = input("Enter a string: ")
+ciphertext = submit(user_string)
+plaintext = verify(ciphertext, key, iv)
+
+
 
 # Modified submit function =================================================
 # Modify the ciphertext returned by submit() to get verify() to return true

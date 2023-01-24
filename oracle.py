@@ -92,7 +92,7 @@ def cbc_decrypt(data, key, iv):
 def submit(user_string):
     user_string = user_string.replace(";", "%3B")
     user_string = user_string.replace("=", "%3D")
-    user_string = "userid=456;userdata=" + user_string + ";session-id=31337"
+    user_string = r"userid=456;userdata=" + user_string + r";session-id=31337"
     #user_string = "hello"
     data = user_string.encode(encoding_type)
     ciphertext = cbc_encrypt(data, key, iv)
@@ -114,38 +114,35 @@ def verify(ciphertext, key, iv):
         print("False")
         return False
 
-user_string = input("Enter a string: ")
-ciphertext = submit(user_string)
-# ATTACK BEGINS HERE ===========================
-# userid=456;userdata=;admin=true;session-id=31337
-# 58 -> 59 for : -> ;
-# bin 0000000000111010 -> 
-#     0000000000111011
-# XOR 0000000000000001     
-# 60 -> 61 for < -> =
-# bin 0000000000111100 ->
-#     0000000000111101
-# XOR 0000000000000001
-# userid=456;userdata=:admin<true;session-id=31337
-# 20 masked, flip, 5 no flip, flip, 21 masked
-print(ciphertext)
-plaintext = verify(ciphertext, key, iv)
-print(plaintext)
-desire = "userid=456;userdata=;admin=true;session-id=31337".encode(encoding_type)
-attack = "userid=456;userdata=:admin<true;session-id=31337".encode(encoding_type)
-attackxor = bytes(map(operator.sub, desire, attack))
-attackcipher = bytes(map(operator.xor, ciphertext, attackxor))
-print("attackxor\t ", attackxor)
-print("attackcipher\t ", attackcipher)
-plaintext = verify(attackcipher, key, iv)
-print(plaintext)
-
-
 # Modified submit function =================================================
 # Modify the ciphertext returned by submit() to get verify() to return true
 # Flipping one bit in ciphertext block ci will result in a scrambled plaintext block mi,
 # but will flip the same bit in plaintext block mi+1
 
 
-def modified_submit(ciphertext):
-    verify(ciphertext)
+def modified_submit(ciphertext, key, iv):
+    # ATTACK BEGINS HERE ===========================
+    # userid=456;userdata=;admin=true;session-id=31337
+    # 58 -> 59 for : -> ;
+    # bin 0000000000111010 -> 
+    #     0000000000111011
+    # XOR 0000000000000001     
+    # 60 -> 61 for < -> =
+    # bin 0000000000111100 ->
+    #     0000000000111101
+    # XOR 0000000000000001
+    # userid=456;userdata=:admin<true;session-id=31337
+    # 20 masked, flip, 5 no flip, flip, 21 masked
+    print("Cipher before attack ", bytes(ciphertext))
+    desire = pad_pkcs7("userid=456;userdata=;admin=true;session-id=31337".encode(encoding_type), block_size)
+    attack = pad_pkcs7("userid=456;userdata=:admin<true;session-id=31337".encode(encoding_type), block_size)
+    attackxor = bytes(map(operator.sub, desire, attack))
+    attackcipher = bytes(map(operator.xor, ciphertext, attackxor))
+    print("Cipher after  attack ", attackcipher)
+    verify(attackcipher, key, iv)
+
+
+user_string = input("Enter a string: ")
+ciphertext = submit(user_string)
+verify(ciphertext, key, iv)
+modified_submit(ciphertext, key, iv)

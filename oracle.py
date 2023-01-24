@@ -129,10 +129,15 @@ ciphertext = submit(user_string)
 # userid=456;userdata=:admin<true;session-id=31337
 # 20 masked, flip, 5 no flip, flip, 21 masked
 print(ciphertext)
-attack = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-attackcipher = bytes(map(operator.xor, ciphertext, attack))
-print(ciphertext)
 plaintext = verify(ciphertext, key, iv)
+print(plaintext)
+desire = "userid=456;userdata=;admin=true;session-id=31337".encode(encoding_type)
+attack = "userid=456;userdata=:admin<true;session-id=31337".encode(encoding_type)
+attackxor = bytes(map(operator.sub, desire, attack))
+attackcipher = bytes(map(operator.xor, ciphertext, attackxor))
+print("attackxor\t ", attackxor)
+print("attackcipher\t ", attackcipher)
+plaintext = verify(attackcipher, key, iv)
 print(plaintext)
 
 

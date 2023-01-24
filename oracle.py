@@ -50,12 +50,13 @@ def cbc_encrypt(data, key, iv):
     newiv = iv
     print("Data after padding: ", data)
 
-    print("len data ", len(data))
+    #print("len data ", len(data))
     for i in range(int(len(data)/block_size)):
         buffer = data[i*block_size:(i+1)*block_size]
-        print("buffer ", buffer)
+        #print("buffer ", buffer)
         buffer = bytes(map(operator.xor, buffer, newiv))
         ciphertext = cipher.encrypt(buffer)
+        #print("Ciphertext:\t ", ciphertext)
         newiv = ciphertext
         for abyte in ciphertext:
             encrypted.append(abyte)
@@ -73,17 +74,16 @@ def cbc_decrypt(data, key, iv):
         buffer = data[i*block_size:(i+1)*block_size]
         print("buffer decrypt\t ", buffer)
         newiv = buffer
-        buffer = bytes(map(operator.xor, buffer, lastiv))
-        ciphertext = cipher.decrypt(buffer)
-        newiv = ciphertext
+        deciphered = cipher.decrypt(buffer)
+        deciphered = bytes(map(operator.xor, deciphered, lastiv))
         if i == int(len(data)/block_size)-1:
-            for abyte in unpad_pkcs7(ciphertext, block_size):
+            for abyte in unpad_pkcs7(deciphered, block_size):
                 decrypted.append(abyte)
         else:
-            for abyte in ciphertext:
+            for abyte in deciphered:
                 decrypted.append(abyte)
     print("Decrypted:\t ", decrypted)
-    return decrypted
+    return decrypted.decode(encoding_type)
 
 
 # Submit function ==========================================================
@@ -97,7 +97,7 @@ def submit(user_string):
     user_string = user_string.replace(";", "%3B")
     user_string = user_string.replace("=", "%3D")
     user_string = "userid=456;userdata=" + user_string + ";session-id=31337"
-    user_string = "hello"
+    #user_string = "hello"
     print("Starting str:\t ", user_string)
     data = user_string.encode(encoding_type)
     print("Post Encryption:\t ", data)
@@ -108,7 +108,7 @@ def submit(user_string):
 user_string = input("Enter a string: ")
 encrypted_str = submit(user_string)
 decrypted_str = cbc_decrypt(encrypted_str, key, iv)
-print(decrypted_str.decode(encoding_type))
+print(decrypted_str)
 
 
 # Verify function ==========================================================

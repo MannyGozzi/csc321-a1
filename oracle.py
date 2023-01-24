@@ -9,6 +9,7 @@ block_size = 16
 key_size = 16
 key = get_random_bytes(key_size)
 iv = get_random_bytes(block_size)
+encoding_type = "utf-16"
 
 def pad_pkcs7(buffer, block_size) -> bytes:
     pad_len = block_size - (len(buffer) % (block_size + 1)) # +1 for null terminated string when read
@@ -35,9 +36,9 @@ def cbc_encrypt(data, key, iv):
     for i in range(int(len(data)/block_size - 1)):
         buffer: bytearray = data[i*block_size:(i+1)*block_size]
         buffer = bytearray(map(operator.xor, buffer, newiv))
-        ciphertext = cipher.encrypt(buffer, AES.MODE_ECB)
+        ciphertext = cipher.encrypt(buffer)
         newiv = ciphertext
-        encrypted.join(ciphertext)
+        encrypted += ciphertext
     return encrypted
 
 def cbc_decrypt(data, key, iv):
@@ -48,13 +49,15 @@ def cbc_decrypt(data, key, iv):
         lastiv = newiv
         buffer = data[i*block_size:(i+1)*block_size]
         newiv = buffer
-        buffer = bytearray(map(operator.xor, lastiv))
-        ciphertext = cipher.decrypt(buffer, AES.MODE_ECB)
+        buffer = bytearray(map(operator.xor, buffer, lastiv))
+        ciphertext = cipher.decrypt(buffer)
         newiv = ciphertext
         if i == (len(data) / block_size - 1):
-            decrypted.join(unpad_pkcs7(ciphertext, block_size))
+            decrypted += unpad_pkcs7(ciphertext, block_size)
         else:
-            decrypted.join(ciphertext)
+            decrypted += ciphertext
+    return decrypted.decode(encoding_type)
+        
 
 
 # Submit function ==========================================================
@@ -68,12 +71,13 @@ def submit(user_string):
     user_string = user_string.replace(";", "%3B")
     user_string = user_string.replace("=", "%3D")
     data = "userid=456;userdata=" + user_string + ";session-id=31337"
-    data = bytes(data.encode("utf-16")) # python defaults to utf-16
+    data = bytes(data.encode(encoding_type)) # python defaults to utf-16
     ciphertext = cbc_encrypt(data, key, iv)
     return ciphertext
 
 user_string = input("Enter a string: ")
-submit(user_string)
+encrypted_str = submit(user_string)
+print(cbc_decrypt(encrypted_str, key, iv))
 
 
 # Verify function ==========================================================

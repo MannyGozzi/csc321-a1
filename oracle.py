@@ -8,7 +8,7 @@ block_size = 16
 key_size = 16
 key = get_random_bytes(key_size)
 iv = get_random_bytes(block_size)
-encoding_type = "utf-8"
+encoding_type = "ascii"
 
 
 def pad_pkcs7(buffer, block_size) -> bytes:
@@ -106,6 +106,7 @@ def submit(user_string):
 
 def verify(ciphertext, key, iv):
     plaintext = cbc_decrypt(ciphertext, key, iv)
+    print("Decrypted: ", plaintext)
     if ";admin=true;" in plaintext:
         print("True")
         return True
@@ -115,8 +116,24 @@ def verify(ciphertext, key, iv):
 
 user_string = input("Enter a string: ")
 ciphertext = submit(user_string)
+# ATTACK BEGINS HERE ===========================
+# userid=456;userdata=;admin=true;session-id=31337
+# 58 -> 59 for : -> ;
+# bin 0000000000111010 -> 
+#     0000000000111011
+# XOR 0000000000000001     
+# 60 -> 61 for < -> =
+# bin 0000000000111100 ->
+#     0000000000111101
+# XOR 0000000000000001
+# userid=456;userdata=:admin<true;session-id=31337
+# 20 masked, flip, 5 no flip, flip, 21 masked
+print(ciphertext)
+attack = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+attackcipher = bytes(map(operator.xor, ciphertext, attack))
+print(ciphertext)
 plaintext = verify(ciphertext, key, iv)
-
+print(plaintext)
 
 
 # Modified submit function =================================================

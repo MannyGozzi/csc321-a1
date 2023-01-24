@@ -3,15 +3,17 @@ from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 import operator
 
-filename = "cp-logo.bmp"
+filename = "mustang.bmp"
 block_size = 16        # AES uses 16 byte blocks
 key_size = 16
 header_size = 54
 key = get_random_bytes(key_size)
 iv = get_random_bytes(block_size)
 
-def pad_pkcs7(buffer, block_size):
-    pad_len = block_size - (len(buffer) % (block_size + 1)) # +1 for null terminated string when read
+def pad_pkcs7(buffer, block_size) -> bytes:
+    pad_len = block_size-(len(buffer) % (block_size)) # +1 for null terminated string when read
+    if pad_len == 16:
+        pad_len = 0
     buff_char = pad_len.to_bytes(1, "little")
     for i in range(pad_len):
         buffer = buffer + buff_char

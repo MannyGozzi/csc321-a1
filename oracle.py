@@ -79,7 +79,7 @@ def cbc_decrypt(data, key, iv):
         else:
             for abyte in deciphered:
                 decrypted.append(abyte)
-    return decrypted.decode(encoding_type)
+    return decrypted.decode(encoding_type, "ignore")
 
 
 # Submit function ==========================================================
@@ -108,7 +108,7 @@ def verify(ciphertext, key, iv):
     plaintext = cbc_decrypt(ciphertext, key, iv)
     print("Decrypted: ", plaintext)
     if ";admin=true;" in plaintext:
-        print("True")
+        print("True. Verification Complete. Time to celebrate!")
         return True
     else:
         print("False")
@@ -131,23 +131,19 @@ def modified_submit(ciphertext, key, iv):
     # bin 0000000000111100 ->
     #     0000000000111101 desired
     # XOR 0000000000000001
-    # userid=456;userdata=:admin<true;session-id=31337
-    # 20 masked, flip, 5 no flip, flip, 21 masked
-    print("Cipher before attack ", bytes(ciphertext))
-    desire = pad_pkcs7("userid=456;userdata=;admin=true;session-id=31337".encode(encoding_type), block_size)
-    attack = pad_pkcs7("userid=456;userdata=:admin<true;session-id=31337".encode(encoding_type), block_size)
-    attackxor = bytes(map(operator.sub, desire, attack))
-    print("attackxor ", attackxor)
-    print("len attackxor ", len(attackxor))
-    print("len ciphertext ", len(ciphertext))
-    # switch1 = ord(ciphertext[20]) ^ 1
-    # switch2 = ord(ciphertext[26]) ^ 1
-    # attackcipher = ciphertext[:19] + switch1 + ciphertext[21: 26] + switch2 + ciphertext[27:]
-    attackcipher = bytes(map(operator.xor, ciphertext, attackxor))
-    print("Cipher after  attack ", attackcipher)
-    verify(attackcipher, key, iv)
+    # 0123456789
+    # "userid=456;userd"
+    # "ata=;admin=true;"
+    #  alter bits 4, and 10 (0-indexed)
+    # print("Cipher before attack ", bytearray(ciphertext))
+    ciphertext[4] = ciphertext[4] ^ 1
+    ciphertext[10] = ciphertext[10] ^ 1
+    #print("Cipher after  attack ", ciphertext)
+    verify(ciphertext, key, iv)
 
 
+# in order to gain access type the string ":admin<true" in order to 
+# perform the attack correctly
 user_string = input("Enter a string: ")
 ciphertext = submit(user_string)
 verify(ciphertext, key, iv)

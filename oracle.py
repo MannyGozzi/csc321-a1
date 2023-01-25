@@ -14,7 +14,7 @@ encoding_type = "ascii"
 def pad_pkcs7(buffer, block_size) -> bytes:
     # +1 for null terminated string when read
     pad_len = block_size-(len(buffer) % (block_size))
-    if pad_len == 16:
+    if pad_len == block_size:
         pad_len = 0
     buff_char = pad_len.to_bytes(1, "little")
     for i in range(pad_len):
@@ -129,7 +129,7 @@ def modified_submit(ciphertext, key, iv):
     # XOR 0000000000000001     
     # 60 -> 61 for < -> =
     # bin 0000000000111100 ->
-    #     0000000000111101
+    #     0000000000111101 desired
     # XOR 0000000000000001
     # userid=456;userdata=:admin<true;session-id=31337
     # 20 masked, flip, 5 no flip, flip, 21 masked
@@ -137,6 +137,12 @@ def modified_submit(ciphertext, key, iv):
     desire = pad_pkcs7("userid=456;userdata=;admin=true;session-id=31337".encode(encoding_type), block_size)
     attack = pad_pkcs7("userid=456;userdata=:admin<true;session-id=31337".encode(encoding_type), block_size)
     attackxor = bytes(map(operator.sub, desire, attack))
+    print("attackxor ", attackxor)
+    print("len attackxor ", len(attackxor))
+    print("len ciphertext ", len(ciphertext))
+    # switch1 = ord(ciphertext[20]) ^ 1
+    # switch2 = ord(ciphertext[26]) ^ 1
+    # attackcipher = ciphertext[:19] + switch1 + ciphertext[21: 26] + switch2 + ciphertext[27:]
     attackcipher = bytes(map(operator.xor, ciphertext, attackxor))
     print("Cipher after  attack ", attackcipher)
     verify(attackcipher, key, iv)

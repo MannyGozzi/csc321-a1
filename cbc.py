@@ -12,7 +12,7 @@ iv = get_random_bytes(block_size)
 
 def pad_pkcs7(buffer, block_size) -> bytes:
     pad_len = block_size-(len(buffer) % (block_size)) # +1 for null terminated string when read
-    if pad_len == 16:
+    if pad_len == block_size:
         pad_len = 0
     buff_char = pad_len.to_bytes(1, "little")
     for i in range(pad_len):
